@@ -41,6 +41,14 @@ $jdk=$null; foreach($candidate in ($candidates|Select-Object -Unique)){if((Get-J
 if(-not $jdk){throw 'JDK 17 was not found.'}
 $env:JAVA_HOME=$jdk; $env:Path="$env:JAVA_HOME\bin;$env:Path"
 
+if (-not $env:ANDROID_HOME) {
+    $candidate = Join-Path $env:LOCALAPPDATA 'Android\Sdk'
+    if (Test-Path $candidate) { $env:ANDROID_HOME = $candidate }
+}
+if (-not $env:ANDROID_HOME -or -not (Test-Path $env:ANDROID_HOME)) {
+    throw 'Android SDK not found. Install Android Studio first or set ANDROID_HOME.'
+}
+
 $gradleVersion='8.9'; $tools=Join-Path $root '.tools'; $gradleHome=Join-Path $tools "gradle-$gradleVersion"
 if(-not(Test-Path(Join-Path $gradleHome 'bin\gradle.bat'))){
     New-Item -ItemType Directory -Force -Path $tools|Out-Null
