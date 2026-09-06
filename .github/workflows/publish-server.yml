@@ -24,6 +24,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository_owner }}/budget-manager-server
+          flavor: |
+            latest=false
           tags: |
             type=match,pattern=v(.*),group=1
             type=raw,value=beta

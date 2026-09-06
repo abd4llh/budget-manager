@@ -24,3 +24,4 @@ android/app/build/
 exports/
 
 MANIFEST.sha256
+android/.kotlin/
