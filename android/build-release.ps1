@@ -9,8 +9,8 @@ foreach ($name in $required) {
 if (-not (Test-Path $env:BUDGET_ANDROID_KEYSTORE)) { throw "Keystore not found: $env:BUDGET_ANDROID_KEYSTORE" }
 
 # Reuse the JDK/Gradle bootstrap logic from the debug builder without installing an APK.
-function Get-JavaMajor([string]$home) {
-    $java = Join-Path $home 'bin\java.exe'
+function Get-JavaMajor([string]$javaHome) {
+    $java = Join-Path $javaHome 'bin\java.exe'
     if (-not (Test-Path $java)) { return $null }
     $out = (& $java -version 2>&1 | Out-String)
     if ($out -match 'version\s+"(\d+)') { return [int]$Matches[1] }

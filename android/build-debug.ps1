@@ -2,8 +2,8 @@ $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $root
 
-function Get-JavaMajor([string]$home) {
-    $java = Join-Path $home 'bin\java.exe'
+function Get-JavaMajor([string]$javaHome) {
+    $java = Join-Path $javaHome 'bin\java.exe'
     if (-not (Test-Path $java)) { return $null }
     $out = (& $java -version 2>&1 | Out-String)
     if ($out -match 'version\s+"(\d+)') { return [int]$Matches[1] }
