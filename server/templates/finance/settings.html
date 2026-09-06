@@ -1,0 +1,14 @@
+{% extends 'base.html' %}{% block content %}
+<div class="narrow">
+  <div class="page-head"><div><span class="eyebrow">Household rules</span><h1>Settings</h1><p class="muted">Control how real transaction dates are assigned to budget months.</p></div></div>
+  <section class="card cycle-explainer">
+    <h2>Pay-cycle budgeting</h2>
+    <p>Your bank transaction keeps its real date. In <strong>Salary / pay-cycle month</strong> mode, a salary transaction assigned to the selected funding category opens the <strong>following budget month</strong>.</p>
+    <div class="cycle-example"><span>28 Aug · Salary</span><strong>→ September budget opens</strong><span>28 Aug–27 Sep · spending</span><strong>→ September</strong><span>Next salary arrives</span><strong>→ October opens</strong></div>
+    <p class="muted">If salary arrives earlier or later because of a weekend or holiday, the actual salary date becomes the boundary automatically. A manually entered Budget date remains an override.</p>
+  </section>
+  <form method="post" class="card form-card stack">{% csrf_token %}{{ form.as_p }}{% if can_edit %}<button class="btn primary">Save settings</button>{% else %}<p class="muted">Only the household owner can change these settings.</p>{% endif %}</form>
+  <section class="card"><h2>Account security</h2><p>Change the password for your own login.</p><a class="btn" href="{% url 'password_change' %}">Change my password</a></section>
+  <section class="card"><h2>Data export</h2><p>These exports are useful for portability. Automated PostgreSQL and media backups are handled separately by Docker.</p><div class="actions"><a class="btn" href="{% url 'export_transactions_csv' %}">Transactions CSV</a><a class="btn" href="{% url 'export_json' %}">Full JSON export</a></div></section>
+</div>
+{% endblock %}

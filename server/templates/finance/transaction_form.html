@@ -1,0 +1,51 @@
+{% extends 'base.html' %}{% load finance_tags %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><span class="eyebrow">Ledger entry</span><h1>{{ title }}</h1><p class="muted">Record what happened. Budget classification stays separate from the account movement underneath.</p></div><a class="btn" href="{% url 'transactions' %}">← Transactions</a></div>
+{% if reimbursement_link %}<div class="card reimbursement-status"><div><span class="eyebrow">Shared purchase</span><strong>{% if is_reimbursement_side %}This payment is paired with {{ reimbursement_link.purchase.description }}.{% else %}This purchase is paired with {{ reimbursement_link.reimbursement.description }}.{% endif %}</strong><p class="muted">The paired amount is {{ reimbursement_link.amount|money:household_settings.base_currency }}. Unpair before editing either transaction.</p></div><form method="post" action="{% url 'reimbursement_unpair' reimbursement_link.pk %}">{% csrf_token %}<button class="btn danger" type="submit">Unpair</button></form></div>{% elif transaction and can_pair_reimbursement %}<div class="card reimbursement-status"><div><span class="eyebrow">Shared purchase?</span><strong>Was this incoming payment a reimbursement from someone?</strong><p class="muted">Pair it with the original purchase and Budget Manager will reduce the purchase expense automatically.</p></div><a class="btn primary" href="{% url 'reimbursement_pair' transaction.pk %}">Pair reimbursement</a></div>{% endif %}
+<form method="post" enctype="multipart/form-data" class="transaction-composer">{% csrf_token %}
+  {% if form.non_field_errors %}<div class="message error">{% for e in form.non_field_errors %}{{ e }}{% endfor %}</div>{% endif %}
+  <section class="card transaction-primary">
+    <div class="section-head"><div><h2>What happened?</h2><p class="muted">Choose the transaction type first; the app will suggest suitable accounts and budget treatment.</p></div></div>
+    <div class="form-grid transaction-top-grid">
+      <div class="field"><label>{{ form.kind.label }}</label>{{ form.kind }}{% for e in form.kind.errors %}<div class="error">{{ e }}</div>{% endfor %}</div>
+      <div class="field"><label>{{ form.date.label }}</label>{{ form.date }}{% for e in form.date.errors %}<div class="error">{{ e }}</div>{% endfor %}</div>
+      <div class="field"><label>{{ form.status.label }}</label>{{ form.status }}{% for e in form.status.errors %}<div class="error">{{ e }}</div>{% endfor %}</div>
+      <div class="field span-2"><label>{{ form.description.label }}</label>{{ form.description }}{% for e in form.description.errors %}<div class="error">{{ e }}</div>{% endfor %}</div>
+      <div class="field"><label>{{ form.payee.label }}</label>{{ form.payee }}{% for e in form.payee.errors %}<div class="error">{{ e }}</div>{% endfor %}</div>
+    </div>
+  </section>
+
+  <section class="card movement-card">
+    <div class="section-head"><div><h2>Money movement</h2><p class="muted">Where the money came from and where it went.</p></div></div>
+    <div class="movement-grid">
+      <div class="field movement-account"><label>{{ form.from_account.label }}</label>{{ form.from_account }}{% for e in form.from_account.errors %}<div class="error">{{ e }}</div>{% endfor %}<small>Money leaves this account</small></div>
+      <div class="movement-arrow">→</div>
+      <div class="field movement-account"><label>{{ form.to_account.label }}</label>{{ form.to_account }}{% for e in form.to_account.errors %}<div class="error">{{ e }}</div>{% endfor %}<small>Money arrives here</small></div>
+      <div class="field movement-amount"><label>{{ form.amount.label }}</label><div class="currency-input">{{ form.amount }}<span>{{ household_settings.base_currency }}</span></div>{% for e in form.amount.errors %}<div class="error">{{ e }}</div>{% endfor %}</div>
+    </div>
+    <details class="advanced-block"><summary>Cross-currency options</summary><div class="form-grid advanced-grid"><div class="field"><label>{{ form.destination_amount.label }}</label>{{ form.destination_amount }}{% if form.destination_amount.help_text %}<small>{{ form.destination_amount.help_text }}</small>{% endif %}{% for e in form.destination_amount.errors %}<div class="error">{{ e }}</div>{% endfor %}</div><div class="field"><label>{{ form.base_value.label }}</label>{{ form.base_value }}{% if form.base_value.help_text %}<small>{{ form.base_value.help_text }}</small>{% endif %}{% for e in form.base_value.errors %}<div class="error">{{ e }}</div>{% endfor %}</div></div></details>
+  </section>
+
+  <section class="card budget-impact-card">
+    <div class="section-head"><div><h2>Budget classification</h2><p class="muted">Tell the monthly budget how to interpret this transaction. Pure transfers can have no impact.</p></div><div class="actions"><a class="btn small" href="{% url 'categories' %}">Categories</a><button class="btn" type="button" data-add-impact>＋ Add split</button></div></div>
+    <div class="impact-labels"><span>Impact</span><span>Category</span><span>Amount</span><span>Budget date</span><span>Memo</span><span></span></div>
+    <div id="impact-rows">{% for row in impact_rows %}<div class="impact-row"><select class="control impact-kind" name="impact_kind"><option value="">No impact</option><option value="funding" {% if row.kind == 'funding' %}selected{% endif %}>Funding</option><option value="expense" {% if row.kind == 'expense' %}selected{% endif %}>Expense</option><option value="savings" {% if row.kind == 'savings' %}selected{% endif %}>Savings</option></select><select class="control impact-category" name="impact_category" data-selected="{{ row.category_id }}"></select><input class="control" name="impact_amount" type="number" step="0.01" placeholder="Same" value="{{ row.amount }}"><input class="control" name="impact_date" type="date" value="{{ row.budget_date }}"><input class="control" name="impact_memo" placeholder="Optional" value="{{ row.memo }}"><button type="button" class="icon-btn danger-text" data-remove-impact aria-label="Remove split">×</button></div>{% endfor %}</div>
+    <div class="budget-impact-note"><span>ⓘ</span><p>A blank split amount uses the transaction value. Leave <strong>Budget date</strong> blank to let the household pay-cycle assign the month automatically. Entering a Budget date manually locks that split to your chosen month.</p></div>
+  </section>
+
+  <section class="card transaction-details">
+    <div class="section-head"><div><h2>Details</h2><p class="muted">Optional context, tags and a receipt or document.</p></div></div>
+    <div class="form-grid">
+      <div class="field"><label>{{ form.tags.label }}</label>{{ form.tags }}{% for e in form.tags.errors %}<div class="error">{{ e }}</div>{% endfor %}</div>
+      <div class="field"><label>{{ form.attachment.label }}</label>{{ form.attachment }}{% for e in form.attachment.errors %}<div class="error">{{ e }}</div>{% endfor %}</div>
+      <div class="field span-2"><label>{{ form.notes.label }}</label>{{ form.notes }}{% for e in form.notes.errors %}<div class="error">{{ e }}</div>{% endfor %}</div>
+    </div>
+  </section>
+
+  {% if transaction.attachments.all %}<section class="card"><h2>Attachments</h2>{% for a in transaction.attachments.all %}<div class="line-item"><a class="linked" href="{% url 'attachment_download' a.pk %}">{{ a.label|default:a.file.name }}</a><form method="post" action="{% url 'attachment_delete' a.pk %}" onsubmit="return confirm('Delete attachment?');">{% csrf_token %}<button class="btn small danger" type="submit">Delete</button></form></div>{% endfor %}</section>{% endif %}
+  <div class="composer-actions"><a class="btn" href="{% url 'transactions' %}">Cancel</a><button class="btn primary large" type="submit">Save transaction</button>{% if transaction %}<button class="btn danger" type="submit" form="delete-tx">Delete</button>{% endif %}</div>
+</form>
+{% if transaction %}<form id="delete-tx" method="post" action="{% url 'transaction_delete' transaction.pk %}" onsubmit="return confirm('Delete this transaction?');">{% csrf_token %}</form>{% endif %}
+{{ categories_data|json_script:'budget-categories' }}{{ accounts_data|json_script:'budget-accounts' }}
+{% endblock %}

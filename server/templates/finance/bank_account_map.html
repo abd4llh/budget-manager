@@ -1,0 +1,6 @@
+{% extends 'base.html' %}
+{% block title %}Map bank account · Budget Manager{% endblock %}
+{% block content %}
+<div class="page-head"><div><p class="eyebrow">Bank mapping</p><h1>{{ link.name|default:'Bank account' }}</h1><p class="muted">{{ link.connection.aspsp_name }} · {{ link.masked_iban }} · {{ link.currency }}</p></div><a class="btn" href="{% url 'bank_connections' %}">Back</a></div>
+<section class="card form-card"><form method="post">{% csrf_token %}{{ form.as_p }}<div class="inline-alert"><strong>Why map it?</strong><span>The bank feed is only a source of observations. Mapping tells Budget Manager which existing ledger account should receive those imported movements; it does not replace your ledger balance automatically.</span></div><button class="btn primary" type="submit">Save mapping</button></form></section>
+{% endblock %}

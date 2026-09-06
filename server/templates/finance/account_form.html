@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<div class="page-head"><div><span class="eyebrow">Account setup</span><h1>{{ title }}</h1><p class="muted">Define where the money is, who owns it, and how it should behave in your household finances.</p></div><a class="btn" href="{{ back_url }}">← Accounts</a></div>
+<form method="post" class="account-editor">{% csrf_token %}
+{% if form.non_field_errors %}<div class="message error">{{ form.non_field_errors }}</div>{% endif %}
+<section class="card"><div class="section-head"><div><h2>Identity & ownership</h2><p class="muted">Select one person for a personal account, or select both household members for a joint account.</p></div><a class="text-link" href="{% url 'account_owners' %}">Manage owners</a></div><div class="form-grid">
+<div class="field"><label>{{ form.name.label }}</label>{{ form.name }}{% for e in form.name.errors %}<div class="error">{{ e }}</div>{% endfor %}</div>
+<div class="field owner-checkbox-field"><label>{{ form.owners.label }}</label>{{ form.owners }}<small>{{ form.owners.help_text }}</small>{% for e in form.owners.errors %}<div class="error">{{ e }}</div>{% endfor %}</div>
+<div class="field"><label>{{ form.account_type.label }}</label>{{ form.account_type }}<small>What the bank/product actually is.</small>{% for e in form.account_type.errors %}<div class="error">{{ e }}</div>{% endfor %}</div>
+<div class="field"><label>{{ form.purpose.label }}</label>{{ form.purpose }}<small>{{ form.purpose.help_text }}</small>{% for e in form.purpose.errors %}<div class="error">{{ e }}</div>{% endfor %}</div>
+<div class="field span-2"><label>{{ form.institution.label }}</label>{{ form.institution }}{% for e in form.institution.errors %}<div class="error">{{ e }}</div>{% endfor %}</div>
+</div></section>
+<section class="card"><div class="section-head"><div><h2>Balance & tracking</h2><p class="muted">Opening balance is the starting point for the ledger; reconciliation can correct it later.</p></div></div><div class="form-grid">
+<div class="field"><label>{{ form.currency.label }}</label>{{ form.currency }}{% for e in form.currency.errors %}<div class="error">{{ e }}</div>{% endfor %}</div>
+<div class="field"><label>{{ form.opening_date.label }}</label>{{ form.opening_date }}{% for e in form.opening_date.errors %}<div class="error">{{ e }}</div>{% endfor %}</div>
+<div class="field"><label>{{ form.opening_balance.label }}</label>{{ form.opening_balance }}<small>{{ form.opening_balance.help_text }}</small>{% for e in form.opening_balance.errors %}<div class="error">{{ e }}</div>{% endfor %}</div>
+<div class="field"><label>{{ form.opening_base_balance.label }}</label>{{ form.opening_base_balance }}<small>{{ form.opening_base_balance.help_text }}</small>{% for e in form.opening_base_balance.errors %}<div class="error">{{ e }}</div>{% endfor %}</div>
+<div class="field check-field"><label>{{ form.include_in_net_worth }} <span>{{ form.include_in_net_worth.label }}</span></label>{% for e in form.include_in_net_worth.errors %}<div class="error">{{ e }}</div>{% endfor %}</div>
+<div class="field check-field"><label>{{ form.is_active }} <span>{{ form.is_active.label }}</span></label>{% for e in form.is_active.errors %}<div class="error">{{ e }}</div>{% endfor %}</div>
+</div></section>
+<section class="card restricted-release" data-restricted-release><div class="section-head"><div><h2>Restricted-fund release plan</h2><p class="muted">Useful for the blocked account. This records the expected release; it does not move money automatically.</p></div></div><div class="form-grid">
+<div class="field"><label>{{ form.monthly_release_amount.label }}</label>{{ form.monthly_release_amount }}<small>{{ form.monthly_release_amount.help_text }}</small>{% for e in form.monthly_release_amount.errors %}<div class="error">{{ e }}</div>{% endfor %}</div>
+<div class="field"><label>{{ form.release_day.label }}</label>{{ form.release_day }}{% for e in form.release_day.errors %}<div class="error">{{ e }}</div>{% endfor %}</div>
+<div class="field span-2"><label>{{ form.release_destination.label }}</label>{{ form.release_destination }}{% for e in form.release_destination.errors %}<div class="error">{{ e }}</div>{% endfor %}</div>
+</div></section>
+<section class="card"><div class="field"><label>{{ form.notes.label }}</label>{{ form.notes }}{% for e in form.notes.errors %}<div class="error">{{ e }}</div>{% endfor %}</div></section>
+<div class="composer-actions"><a class="btn" href="{{ back_url }}">Cancel</a><button class="btn primary large" type="submit">Save account</button></div>
+</form>
+<script>
+(()=>{const purpose=document.getElementById('id_purpose'),type=document.getElementById('id_account_type'),box=document.querySelector('[data-restricted-release]');if(!purpose||!box)return;const forced={savings:'savings',restricted:'restricted',credit:'liability',loan:'liability',investment:'investment',external:'external'};const sync=()=>{if(type&&forced[type.value])purpose.value=forced[type.value];box.hidden=purpose.value!=='restricted'};purpose.addEventListener('change',sync);type?.addEventListener('change',sync);sync()})();
+</script>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% load static finance_tags %}
+{% app_version as app_version %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#101827">
+  <title>{% block title %}Budget Manager{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <script defer src="{% static 'js/app.js' %}"></script>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="{% url 'dashboard' %}" aria-label="Budget Manager home">
+    <span class="brand-mark">B</span><span>Budget Manager <small>{{ app_version }}</small></span>
+  </a>
+  {% if user.is_authenticated %}
+  <button class="nav-toggle" type="button" data-nav-toggle aria-label="Open navigation">☰</button>
+  <nav class="nav" data-nav>
+    <a class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">Dashboard</a>
+    <a class="{% if 'transaction' in request.resolver_match.url_name and 'bank_inbox' not in request.resolver_match.url_name %}active{% endif %}" href="{% url 'transactions' %}">Transactions</a>
+    <a class="{% if request.resolver_match.url_name == 'bank_inbox' %}active{% endif %}" href="{% url 'bank_inbox' %}">Review</a>
+    <a class="{% if 'budget' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'budget_month' %}">Budget</a>
+    <a class="{% if 'account' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'accounts' %}">Accounts</a>
+    <a class="{% if request.resolver_match.url_name == 'reports' %}active{% endif %}" href="{% url 'reports' %}">Reports</a>
+    <div class="nav-more {% if request.resolver_match.url_name == 'recurring' or request.resolver_match.url_name == 'goals' or request.resolver_match.url_name == 'loans' or request.resolver_match.url_name == 'imports' or request.resolver_match.url_name == 'categories' or request.resolver_match.url_name == 'members' or request.resolver_match.url_name == 'settings' or request.resolver_match.url_name == 'audit' or request.resolver_match.url_name == 'bank_connections' or request.resolver_match.url_name == 'bank_connect' or request.resolver_match.url_name == 'bank_account_map' or request.resolver_match.url_name == 'help' %}has-active{% endif %}">
+      <button type="button">More ▾</button>
+      <div class="nav-menu">
+        <a href="{% url 'recurring' %}">Recurring</a><a href="{% url 'goals' %}">Savings goals</a><a href="{% url 'loans' %}">Loans</a>
+        <a href="{% url 'bank_connections' %}">Bank sync</a><a href="{% url 'imports' %}">CSV imports</a><a href="{% url 'categories' %}">Categories & tags</a>
+        <a href="{% url 'members' %}">Users</a><a href="{% url 'settings' %}">Settings</a><a href="{% url 'audit' %}">Audit log</a><a href="{% url 'help' %}">Help</a>
+      </div>
+    </div>
+    <form method="post" action="{% url 'logout' %}" class="logout">{% csrf_token %}<button class="link-button" type="submit">Log out</button></form>
+  </nav>
+  {% endif %}
+</header>
+<main class="shell">
+  {% if messages %}<div class="messages">{% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}</div>{% endif %}
+  {% block content %}{% endblock %}
+</main>
+<footer><span>Self-hosted Budget Manager {{ app_version }}</span>{% if current_household %}<span>{{ current_household.name }} · {{ current_membership.get_role_display }}</span>{% endif %}</footer>
+
+{% if user.is_authenticated %}
+<button class="calculator-fab" type="button" data-calculator-open aria-label="Open calculator">⌗ <span>Calculator</span></button>
+<section class="calculator-panel" data-calculator-panel hidden aria-label="Calculator">
+  <div class="calculator-head" data-calculator-drag>
+    <div><span class="eyebrow">Quick tool</span><h2>Calculator</h2></div>
+    <div class="calculator-window-actions"><button class="icon-btn" type="button" data-calculator-minimize aria-label="Minimize calculator">−</button><button class="icon-btn" type="button" data-calculator-close aria-label="Close calculator">×</button></div>
+  </div>
+  <div class="calculator-body" data-calculator-body>
+    <label class="sr-only" for="calculator-expression">Calculation</label><input id="calculator-expression" class="calculator-display" data-calculator-expression inputmode="decimal" autocomplete="off" placeholder="0">
+    <div class="calculator-result" aria-live="polite"><span>Result</span><strong data-calculator-result>0</strong></div>
+    <div class="calculator-grid">
+      <button type="button" data-calc-action="clear">AC</button><button type="button" data-calc-value="(">(</button><button type="button" data-calc-value=")">)</button><button type="button" data-calc-action="backspace">⌫</button>
+      <button type="button" data-calc-value="7">7</button><button type="button" data-calc-value="8">8</button><button type="button" data-calc-value="9">9</button><button type="button" class="operator" data-calc-value="/">÷</button>
+      <button type="button" data-calc-value="4">4</button><button type="button" data-calc-value="5">5</button><button type="button" data-calc-value="6">6</button><button type="button" class="operator" data-calc-value="*">×</button>
+      <button type="button" data-calc-value="1">1</button><button type="button" data-calc-value="2">2</button><button type="button" data-calc-value="3">3</button><button type="button" class="operator" data-calc-value="-">−</button>
+      <button type="button" data-calc-value="0">0</button><button type="button" data-calc-value=".">.</button><button type="button" data-calc-value="%">%</button><button type="button" class="operator" data-calc-value="+">+</button>
+      <button type="button" class="equals" data-calc-action="equals">=</button>
+    </div>
+    <small class="muted">Keep this window open while you edit the page. Drag the title bar to move it.</small>
+  </div>
+</section>
+{% endif %}
+</body>
+</html>

@@ -1,0 +1,8 @@
+{% extends 'base.html' %}{% block content %}
+<div class="narrow">
+  <h1>Initial setup</h1>
+  <p>Create the household that owns the accounts, transactions and budget. You can add other household logins and account owners later.</p>
+  <div class="card inline-alert"><strong>Fresh installation</strong><span>Budget Manager starts with no balances or transactions. Starter categories are optional and can be renamed or removed later.</span></div>
+  <form method="post" class="card form-card">{% csrf_token %}{{ form.as_p }}<button class="btn primary">Create Budget Manager</button></form>
+</div>
+{% endblock %}

@@ -1,0 +1,51 @@
+{% extends 'base.html' %}{% load finance_tags %}
+{% block title %}Dashboard · {{ month|date:'F Y' }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><span class="eyebrow">Overview</span><h1>{{ month|date:'F Y' }}</h1><p class="muted">Actual cash flow, budget performance and financial position.</p></div>
+  <div class="actions month-nav"><a class="btn icon-only" href="?year={{ prev_month.year }}&month={{ prev_month.month }}" aria-label="Previous month">←</a><a class="btn icon-only" href="?year={{ next_month.year }}&month={{ next_month.month }}" aria-label="Next month">→</a><a class="btn primary" href="{% url 'transaction_add' %}">＋ Add transaction</a></div>
+</div>
+
+{% if not has_financial_activity %}
+<div class="callout onboarding"><div><strong>Start with your real balances</strong><p>Your budget plan is loaded, but net worth will stay at zero until the opening balances of your tracked accounts are entered.</p></div><a class="btn" href="{% url 'accounts' %}">Set opening balances</a></div>
+{% endif %}
+
+<div class="kpis dashboard-kpis">
+  <div class="kpi funding-kpi"><span>Funding received</span><strong>{{ funding|money:household_settings.base_currency }}</strong><small>Plan {{ planned_funding|money:household_settings.base_currency }}</small></div>
+  <div class="kpi expense-kpi"><span>Spent</span><strong>{{ expenses|money:household_settings.base_currency }}</strong><small>Plan {{ planned_expenses|money:household_settings.base_currency }}</small></div>
+  <div class="kpi savings-kpi"><span>Saved</span><strong>{{ savings|money:household_settings.base_currency }}</strong><small>{{ savings_rate|pct }} of funding</small></div>
+  <div class="kpi {% if remaining < 0 %}danger{% else %}remaining-kpi{% endif %}"><span>Actual remaining</span><strong>{{ remaining|money:household_settings.base_currency }}</strong><small>After expenses & savings</small></div>
+  <div class="kpi networth-kpi"><span>Net worth</span><strong>{{ net_worth|money:household_settings.base_currency }}</strong><small>Included accounts</small></div>
+</div>
+
+<div class="plan-status {% if planned_remaining < 0 %}plan-negative{% elif planned_remaining == 0 %}plan-balanced{% else %}plan-positive{% endif %}">
+  <div><span class="status-label">Budget plan</span><strong>{% if planned_remaining < 0 %}{{ planned_remaining|money:household_settings.base_currency }} overallocated{% elif planned_remaining == 0 %}Fully allocated{% else %}{{ planned_remaining|money:household_settings.base_currency }} still unallocated{% endif %}</strong></div>
+  <div class="status-math"><span>{{ planned_funding|money:household_settings.base_currency }} funding</span><b>−</b><span>{{ planned_expenses|money:household_settings.base_currency }} expenses</span><b>−</b><span>{{ planned_savings|money:household_settings.base_currency }} savings</span></div>
+  <a href="{% url 'budget_month' %}?year={{ month.year }}&month={{ month.month }}">Edit plan →</a>
+</div>
+
+<div class="grid dashboard-main">
+<section class="card performance-card">
+  <div class="section-head"><div><h2>Budget performance</h2><p class="muted">Actual vs planned by category</p></div><a class="text-link" href="{% url 'budget_month' %}?year={{ month.year }}&month={{ month.month }}">Edit budget</a></div>
+  <div class="budget-list">
+  {% for r in category_rows %}
+    <div class="budget-row kind-{{ r.category.kind }}">
+      <div class="category-name"><span class="section-dot"></span><div><strong>{{ r.category.name }}</strong><small>{{ r.category.get_kind_display }}</small></div></div>
+      <div class="grow"><div class="progress"><span style="width:{{ r.progress_width }}%"></span></div><small>{{ r.actual|money:household_settings.base_currency }} of {{ r.planned|money:household_settings.base_currency }}</small></div>
+      <div class="variance {% if r.variance < 0 %}neg{% endif %}"><small>Remaining</small><strong>{{ r.variance|money:household_settings.base_currency }}</strong></div>
+    </div>
+  {% empty %}<div class="empty-state"><strong>No budget activity yet</strong><p>Your plan is ready. Add transactions to see actual-vs-planned progress here.</p><a class="btn primary" href="{% url 'transaction_add' %}">Add first transaction</a></div>{% endfor %}
+  </div>
+</section>
+<section class="card account-snapshot">
+  <div class="section-head"><div><h2>Accounts</h2><p class="muted">Current tracked balances</p></div><a class="text-link" href="{% url 'accounts' %}">Manage</a></div>
+  {% for a in accounts %}<a class="account-line linked" href="{% url 'account_edit' a.pk %}"><div><span class="account-icon">{% if a.purpose == 'savings' %}S{% elif a.purpose == 'restricted' %}R{% elif a.purpose == 'external' %}E{% elif a.purpose == 'liability' %}L{% else %}A{% endif %}</span><div><strong>{{ a.name }}</strong><small>{% if a.owner_labels %}{% for label in a.owner_labels %}{{ label }}{% if not forloop.last %} + {% endif %}{% endfor %} · {% endif %}{{ a.get_purpose_display }}</small></div></div><span class="amount">{{ a.display_balance|money:a.currency }}</span></a>{% empty %}<p class="empty">No accounts.</p>{% endfor %}
+</section>
+</div>
+
+<div class="grid three dashboard-bottom">
+<section class="card"><div class="section-head"><div><h2>Savings goals</h2><p class="muted">Progress toward targets</p></div><a class="text-link" href="{% url 'goals' %}">All goals</a></div>{% for x in goals %}<div class="goal"><div class="line"><strong>{{ x.goal.name }}</strong><span>{{ x.pct|pct }}</span></div><div class="progress savings-progress"><span style="width:{{ x.pct }}%"></span></div><small>{{ x.current|money:household_settings.base_currency }} of {{ x.goal.target_amount|money:household_settings.base_currency }}</small></div>{% empty %}<div class="empty-state small"><strong>No savings goals</strong><a href="{% url 'goal_add' %}">Create one →</a></div>{% endfor %}</section>
+<section class="card"><div class="section-head"><div><h2>Upcoming</h2><p class="muted">Recurring activity</p></div><a class="text-link" href="{% url 'recurring' %}">Manage</a></div>{% for r in upcoming %}<div class="line-item"><div><strong>{{ r.name }}</strong><small>{{ r.next_run }} · {{ r.get_frequency_display }}</small></div><span>{{ r.amount|money:household_settings.base_currency }}</span></div>{% empty %}<div class="empty-state small"><strong>Nothing scheduled</strong><a href="{% url 'recurring_add' %}">Add recurring item →</a></div>{% endfor %}</section>
+<section class="card"><div class="section-head"><div><h2>Recent transactions</h2><p class="muted">Latest ledger activity</p></div><a class="text-link" href="{% url 'transactions' %}">View all</a></div>{% for tx in recent %}<a class="line-item linked" href="{% url 'transaction_edit' tx.pk %}"><div><strong>{{ tx.description }}</strong><small>{{ tx.date }} · {{ tx.get_kind_display }}</small></div><span>{{ tx.base_amount|money:household_settings.base_currency }}</span></a>{% empty %}<div class="empty-state small"><strong>No transactions yet</strong><a href="{% url 'transaction_add' %}">Add one →</a></div>{% endfor %}</section>
+</div>
+{% endblock %}

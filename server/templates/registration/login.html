@@ -1,0 +1,2 @@
+{% extends 'base.html' %}{% block title %}Log in · Budget Manager{% endblock %}{% block content %}
+<div class="auth-card"><h1>Budget Manager</h1><p class="muted">Private finance management on your own server.</p><form method="post" class="stack">{% csrf_token %}{{ form.as_p }}<button class="btn primary" type="submit">Log in</button></form></div>{% endblock %}

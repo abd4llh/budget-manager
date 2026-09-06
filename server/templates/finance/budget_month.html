@@ -1,0 +1,59 @@
+{% extends 'base.html' %}{% load finance_tags %}
+{% block title %}Budget · {{ month|date:'F Y' }}{% endblock %}
+{% block content %}
+<div class="page-head budget-page-head">
+  <div><span class="eyebrow">Monthly plan</span><h1>Budget · {{ month|date:'F Y' }}</h1><p class="muted">Decide where this month's available money should go.</p></div>
+  <div class="actions month-nav"><a class="btn icon-only" href="?year={{ prev_month.year }}&month={{ prev_month.month }}" aria-label="Previous month">←</a><a class="btn icon-only" href="?year={{ next_month.year }}&month={{ next_month.month }}" aria-label="Next month">→</a><a class="btn" href="{% url 'budget_year' %}?year={{ month.year }}">Year view</a><a class="btn" href="{% url 'categories' %}">Manage categories</a></div>
+</div>
+
+<div class="plan-summary" data-budget-summary>
+  <div class="summary-cell funding-tone"><span>Funding</span><strong data-summary-funding>{{ planned_funding|money:household_settings.base_currency }}</strong></div>
+  <div class="summary-cell expense-tone"><span>Expenses</span><strong data-summary-expense>{{ planned_expenses|money:household_settings.base_currency }}</strong></div>
+  <div class="summary-cell savings-tone"><span>Savings</span><strong data-summary-savings>{{ planned_savings|money:household_settings.base_currency }}</strong></div>
+  <div class="summary-cell remaining-tone {% if planned_remaining < 0 %}negative{% endif %}"><span>Left to allocate</span><strong data-summary-remaining>{{ planned_remaining|money:household_settings.base_currency }}</strong><small data-summary-status>{% if planned_remaining < 0 %}Overallocated{% elif planned_remaining == 0 %}Fully allocated{% else %}Still available{% endif %}</small></div>
+</div>
+
+<form id="budget-form" method="post" data-budget-form data-currency="{{ household_settings.base_currency }}">{% csrf_token %}
+  <div class="budget-columns">
+  {% for section in sections %}
+    <section class="card budget-section kind-{{ section.kind }}" data-budget-section="{{ section.kind }}">
+      <div class="section-head budget-section-head">
+        <div><span class="section-dot"></span><h2>{{ section.label }}</h2><small>{% if section.kind == 'funding' %}Money available to budget{% elif section.kind == 'expense' %}Money expected to leave{% else %}Money deliberately set aside{% endif %}</small></div>
+        <div class="section-total"><span>Total</span><strong data-section-total="{{ section.kind }}">{{ section.total|money:household_settings.base_currency }}</strong></div>
+      </div>
+      <div class="budget-input-list">
+      {% for r in section.rows %}
+        <div class="budget-input-row">
+          <div class="budget-label-note"><label for="budget-{{ r.category.id }}"><span>{{ r.category.name }}</span></label><input class="budget-month-note" name="note_{{ r.category.id }}" maxlength="160" value="{{ r.note }}" placeholder="Note for {{ month|date:'F' }} — subscriptions, gift, one-off detail…"></div>
+          <div class="budget-value"><input id="budget-{{ r.category.id }}" name="amount_{{ r.category.id }}" type="number" inputmode="decimal" step="0.01" min="0" value="{{ r.amount }}" data-budget-amount data-kind="{{ section.kind }}"><span>{{ household_settings.base_currency }}</span></div>
+          <a class="row-action" href="{% url 'category_edit' r.category.pk %}" title="Edit category" aria-label="Edit {{ r.category.name }}">•••</a>
+        </div>
+      {% empty %}<p class="empty compact-empty">No categories yet.</p>{% endfor %}
+      </div>
+      {% if current_membership.role != 'viewer' %}
+      <button class="add-category-button" type="button" data-add-budget-category data-kind="{{ section.kind }}" data-label="{{ section.label }}">
+        <span>＋</span>{% if section.kind == 'funding' %}Add funding source{% elif section.kind == 'expense' %}Add expense category{% else %}Add savings category{% endif %}
+      </button>
+      {% endif %}
+    </section>
+  {% endfor %}
+  </div>
+  {% if current_membership.role != 'viewer' %}
+  <div class="sticky-save"><div class="save-strip"><span class="muted" data-budget-dirty>Changes are saved only when you press Save.</span><button class="btn primary large" type="submit">Save {{ month|date:'F' }} budget</button></div></div>
+  {% endif %}
+</form>
+
+{% if current_membership.role != 'viewer' %}
+<dialog class="quick-dialog" data-category-dialog>
+  <form method="post" action="{% url 'budget_category_add' %}" class="quick-dialog-card">{% csrf_token %}
+    <input type="hidden" name="kind" data-category-kind><input type="hidden" name="year" value="{{ month.year }}"><input type="hidden" name="month" value="{{ month.month }}">
+    <div class="section-head"><div><span class="eyebrow">New budget item</span><h2 data-category-title>Add category</h2></div><button type="button" class="icon-btn" data-category-close aria-label="Close">×</button></div>
+    <div class="form-grid quick-grid">
+      <div class="field span-2"><label for="quick-category-name">Name</label><input id="quick-category-name" class="control" name="name" maxlength="120" placeholder="e.g. Car insurance" required data-category-name></div>
+      <div class="field span-2"><label for="quick-category-amount">{{ month|date:'F' }} budget</label><div class="currency-input"><input id="quick-category-amount" class="control" name="amount" type="number" inputmode="decimal" step="0.01" min="0" value="0.00"><span>{{ household_settings.base_currency }}</span></div><small>You can change this value later. The category itself remains available for future months.</small></div><div class="field span-2"><label for="quick-category-note">{{ month|date:'F' }} note <span class="muted">(optional)</span></label><input id="quick-category-note" class="control" name="note" maxlength="160" placeholder="What is included this month?"></div>
+    </div>
+    <div class="actions dialog-actions"><button type="button" class="btn" data-category-close>Cancel</button><button class="btn primary" type="submit">Add to budget</button></div>
+  </form>
+</dialog>
+{% endif %}
+{% endblock %}

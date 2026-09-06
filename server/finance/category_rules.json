@@ -1,0 +1,351 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "name": "Employment",
+      "direction": "in",
+      "aliases": [
+        "Employment",
+        "Salary",
+        "Wages",
+        "Pay",
+        "Income"
+      ],
+      "patterns": [
+        "salary",
+        "payroll",
+        "wages",
+        "wage payment",
+        "gehalt",
+        "lohn",
+        "salaire",
+        "nomina",
+        "stipendio",
+        "salaris",
+        "salario",
+        "wynagrodzenie"
+      ]
+    },
+    {
+      "name": "Housing",
+      "direction": "out",
+      "aliases": [
+        "Housing",
+        "Rent",
+        "Home",
+        "Accommodation",
+        "Other"
+      ],
+      "patterns": [
+        "rent",
+        "rental",
+        "landlord",
+        "lease payment",
+        "miete",
+        "mietzahlung",
+        "loyer",
+        "alquiler",
+        "affitto",
+        "huur",
+        "czynsz"
+      ]
+    },
+    {
+      "name": "Groceries",
+      "direction": "out",
+      "aliases": [
+        "Groceries",
+        "Grocery",
+        "Food",
+        "Supermarket",
+        "Household",
+        "Other"
+      ],
+      "patterns": [
+        "supermarket",
+        "grocery",
+        "groceries",
+        "lidl",
+        "aldi",
+        "rewe",
+        "edeka",
+        "kaufland",
+        "carrefour",
+        "auchan",
+        "mercadona",
+        "tesco",
+        "spar",
+        "intermarche",
+        "coop",
+        "migros",
+        "sainsbury",
+        "waitrose",
+        "asda",
+        "morrisons",
+        "delhaize",
+        "colruyt",
+        "jumbo",
+        "albert heijn",
+        "penny markt",
+        "penny market",
+        "netto",
+        "billa",
+        "hofer"
+      ]
+    },
+    {
+      "name": "Transport",
+      "direction": "out",
+      "aliases": [
+        "Transport",
+        "Transportation",
+        "Public transport",
+        "Fuel",
+        "Car",
+        "Other"
+      ],
+      "patterns": [
+        "uber",
+        "bolt",
+        "taxi",
+        "flixbus",
+        "deutsche bahn",
+        "db vertrieb",
+        "sncf",
+        "oebb",
+        "obb",
+        "trenitalia",
+        "renfe",
+        "transport for london",
+        "tfl travel",
+        "metro ticket",
+        "tram ticket",
+        "bus ticket",
+        "train ticket",
+        "railway",
+        "fuel",
+        "petrol",
+        "gasoline",
+        "diesel",
+        "aral",
+        "esso",
+        "circle k",
+        "totalenergies"
+      ]
+    },
+    {
+      "name": "Utilities",
+      "direction": "out",
+      "aliases": [
+        "Utilities",
+        "Energy",
+        "Electricity",
+        "Water",
+        "Household",
+        "Other"
+      ],
+      "patterns": [
+        "electricity",
+        "electric bill",
+        "gas bill",
+        "water bill",
+        "utility",
+        "strom",
+        "stadtwerke",
+        "vattenfall",
+        "eon",
+        "e on",
+        "enbw",
+        "engie",
+        "iberdrola",
+        "endesa"
+      ]
+    },
+    {
+      "name": "Telecom",
+      "direction": "out",
+      "aliases": [
+        "Telecom",
+        "Phone & Internet",
+        "Phone",
+        "Internet",
+        "Mobile",
+        "Utilities",
+        "Subscriptions",
+        "Other"
+      ],
+      "patterns": [
+        "vodafone",
+        "telekom",
+        "deutsche telekom",
+        "orange telecom",
+        "telefonica",
+        "o2 telecom",
+        "1und1",
+        "1 1 telecom",
+        "broadband",
+        "mobile phone",
+        "internet service"
+      ]
+    },
+    {
+      "name": "Subscriptions",
+      "direction": "out",
+      "aliases": [
+        "Subscriptions",
+        "Subscription",
+        "Memberships",
+        "Digital services",
+        "Other"
+      ],
+      "patterns": [
+        "netflix",
+        "spotify",
+        "disney plus",
+        "disneyplus",
+        "prime video",
+        "youtube premium",
+        "apple music",
+        "google one",
+        "microsoft 365",
+        "office 365",
+        "adobe",
+        "patreon",
+        "dropbox",
+        "icloud"
+      ]
+    },
+    {
+      "name": "Health",
+      "direction": "out",
+      "aliases": [
+        "Health",
+        "Healthcare",
+        "Medical",
+        "Pharmacy",
+        "Other"
+      ],
+      "patterns": [
+        "pharmacy",
+        "apotheke",
+        "chemist",
+        "doctor",
+        "clinic",
+        "hospital",
+        "dentist",
+        "dental",
+        "arzt",
+        "zahnarzt"
+      ]
+    },
+    {
+      "name": "Travel",
+      "direction": "out",
+      "aliases": [
+        "Travel",
+        "Holiday",
+        "Vacation",
+        "Flights",
+        "Hotels",
+        "Other"
+      ],
+      "patterns": [
+        "booking com",
+        "airbnb",
+        "hotel",
+        "hostel",
+        "airline",
+        "flight",
+        "ryanair",
+        "easyjet",
+        "lufthansa",
+        "wizz air",
+        "klm",
+        "air france",
+        "british airways",
+        "aegean airlines",
+        "vueling"
+      ]
+    },
+    {
+      "name": "Dining",
+      "direction": "out",
+      "aliases": [
+        "Dining",
+        "Restaurants",
+        "Eating out",
+        "Food & Dining",
+        "Personal",
+        "Other"
+      ],
+      "patterns": [
+        "restaurant",
+        "cafe",
+        "coffee shop",
+        "coffeehouse",
+        "bakery",
+        "pizzeria",
+        "pizza",
+        "burger",
+        "bistro",
+        "pub"
+      ]
+    },
+    {
+      "name": "Shopping",
+      "direction": "out",
+      "aliases": [
+        "Shopping",
+        "Retail",
+        "Clothing",
+        "Personal",
+        "Other"
+      ],
+      "patterns": [
+        "amazon",
+        "ikea",
+        "zalando",
+        "h and m",
+        "uniqlo",
+        "decathlon",
+        "mediamarkt",
+        "media markt",
+        "saturn",
+        "primark"
+      ]
+    },
+    {
+      "name": "Gifts",
+      "direction": "out",
+      "aliases": [
+        "Gifts",
+        "Gift",
+        "Charity",
+        "Donations",
+        "Other"
+      ],
+      "patterns": [
+        "charity",
+        "donation",
+        "donate",
+        "gift shop"
+      ]
+    },
+    {
+      "name": "Other income",
+      "direction": "in",
+      "aliases": [
+        "Other income",
+        "Income",
+        "Misc income",
+        "Other"
+      ],
+      "patterns": [
+        "interest payment",
+        "bank interest",
+        "dividend",
+        "cashback"
+      ]
+    }
+  ]
+}

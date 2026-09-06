@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}Account owners{% endblock %}
+{% block content %}
+<div class="page-head"><div><span class="eyebrow">Account structure</span><h1>Account owners</h1><p class="muted">Ownership is separate from account type and login permissions. Create Person profiles for household members. Accounts can now select more than one owner, so a joint account can be owned by both people directly. The older Joint profile is kept for compatibility and summary grouping.</p></div><div class="actions"><a class="btn" href="{% url 'accounts' %}">← Accounts</a><a class="btn primary" href="{% url 'account_owner_add' %}">＋ Add owner</a></div></div>
+<div class="cards owner-manager-grid">
+{% for row in owner_rows %}<section class="card owner-manager-card {% if not row.owner.is_active %}muted-card{% endif %}"><div class="line"><div><span class="badge owner-badge owner-{{ row.owner.kind }}">{{ row.owner.get_kind_display }}</span><h2>{{ row.label }}</h2>{% if row.owner.linked_user %}<small>Linked login: {{ row.owner.linked_user.username }}</small>{% else %}<small>No login linked</small>{% endif %}</div><span class="account-count">{{ row.account_count }} account{{ row.account_count|pluralize }}</span></div><div class="actions"><a class="btn small" href="{% url 'account_owner_edit' row.owner.pk %}">Edit</a></div></section>{% empty %}<div class="empty-state card"><strong>No owners</strong><p>Add the people or joint ownership groups used by your accounts.</p></div>{% endfor %}
+</div>
+<div class="callout"><div><strong>Owner ≠ login permission</strong><p>A person owner can exist before their login does. Later, link that owner profile to the matching household user. On an account, select both person owners when the account is genuinely joint.</p></div></div>
+{% endblock %}

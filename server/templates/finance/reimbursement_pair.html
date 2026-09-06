@@ -1,0 +1,9 @@
+{% extends 'base.html' %}{% load finance_tags %}
+{% block title %}Pair reimbursement{% endblock %}
+{% block content %}
+<div class="page-head"><div><span class="eyebrow">Shared purchase</span><h1>Pair reimbursement</h1><p class="muted">Choose the original purchase. Budget Manager will treat this incoming payment as repayment of your friend's share, not as income.</p></div><a class="btn" href="{% url 'transaction_edit' reimbursement.pk %}">← Transaction</a></div>
+<div class="grid two reimbursement-layout">
+  <section class="card"><span class="eyebrow">Incoming payment</span><h2>{{ reimbursement.description }}</h2><div class="reimbursement-amount">{{ amount|money:household_settings.base_currency }}</div><p class="muted">{{ reimbursement.date }}{% if reimbursement.payee %} · {{ reimbursement.payee }}{% endif %}</p><div class="inline-alert"><span>ⓘ</span><div><strong>The full incoming amount will be paired.</strong><span>After pairing, it has no Funding/Income budget impact. The same amount is removed from the original purchase's Expense impact.</span></div></div></section>
+  <form method="post" class="card form-card">{% csrf_token %}<h2>Original purchase</h2>{{ form.as_p }}<div class="help-example"><strong>Example</strong><span>Purchase €100 + reimbursement €40 → budget expense becomes €60.</span><span>No extra receivable bookkeeping is exposed to you.</span></div><div class="actions"><a class="btn" href="{% url 'transaction_edit' reimbursement.pk %}">Cancel</a><button class="btn primary" type="submit">Pair reimbursement</button></div></form>
+</div>
+{% endblock %}

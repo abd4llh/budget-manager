@@ -1,0 +1,38 @@
+{% extends 'base.html' %}{% load finance_tags %}
+{% block title %}Accounts{% endblock %}
+{% block content %}
+<div class="page-head"><div><span class="eyebrow">Financial position</span><h1>Accounts</h1><p class="muted">Accounts tell you <strong>where the money is</strong>. Ownership tells you whose it is; purpose tells you how it is used.</p></div><div class="actions"><a class="btn" href="{% url 'account_owners' %}">Owners</a><a class="btn primary" href="{% url 'account_add' %}">＋ Add account</a></div></div>
+
+<form class="card filter-panel" method="get"><div class="filter-primary"><label class="filter-field"><span>Search</span><input class="control" name="q" value="{{ filters.q }}" placeholder="Account, bank, owner…"></label><label class="filter-field"><span>Owner</span><select class="control" name="owner"><option value="">All owners</option>{% for o in owners %}<option value="{{ o.id }}" {% if filters.owner == o.id|stringformat:'s' %}selected{% endif %}>{{ o.name }}</option>{% endfor %}</select></label><label class="filter-field"><span>Purpose</span><select class="control" name="purpose"><option value="">All purposes</option>{% for v,l in purposes %}<option value="{{ v }}" {% if filters.purpose == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></label><label class="filter-field"><span>Sort</span><select class="control" name="sort"><option value="purpose">Purpose</option><option value="name" {% if sort_filter == 'name' %}selected{% endif %}>Name</option><option value="balance_high" {% if sort_filter == 'balance_high' %}selected{% endif %}>Highest balance</option><option value="balance_low" {% if sort_filter == 'balance_low' %}selected{% endif %}>Lowest balance</option></select></label></div><details class="advanced-filters" {% if filters.type or filters.currency or filters.state != 'active' or filters.networth or filters.balance_min or filters.balance_max %}open{% endif %}><summary>More filters</summary><div class="filter-grid"><label class="filter-field"><span>Account type</span><select class="control" name="type"><option value="">All types</option>{% for v,l in account_types %}<option value="{{ v }}" {% if filters.type == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></label><label class="filter-field"><span>Currency</span><input class="control" name="currency" value="{{ filters.currency }}" placeholder="EUR"></label><label class="filter-field"><span>State</span><select class="control" name="state"><option value="active" {% if filters.state == 'active' or not filters.state %}selected{% endif %}>Active</option><option value="archived" {% if filters.state == 'archived' %}selected{% endif %}>Archived</option><option value="all" {% if filters.state == 'all' %}selected{% endif %}>All</option></select></label><label class="filter-field"><span>Net worth</span><select class="control" name="networth"><option value="">Either</option><option value="yes" {% if filters.networth == 'yes' %}selected{% endif %}>Included</option><option value="no" {% if filters.networth == 'no' %}selected{% endif %}>Excluded</option></select></label><label class="filter-field"><span>Min absolute balance</span><input class="control" type="number" step="0.01" min="0" name="balance_min" value="{{ filters.balance_min }}"></label><label class="filter-field"><span>Max absolute balance</span><input class="control" type="number" step="0.01" min="0" name="balance_max" value="{{ filters.balance_max }}"></label></div></details><div class="filter-actions"><button class="btn primary">Apply filters</button><a class="btn" href="{% url 'accounts' %}">Reset</a><span class="muted filter-result-count">{{ matching_count }} matching account{{ matching_count|pluralize }}</span></div></form>
+
+{% if owner_totals %}
+<section class="owner-overview">
+  <div class="section-head"><div><h2>Ownership overview</h2><p class="muted">Tracked net worth by the account's legacy ownership bucket. Account cards below show the actual selected household owners.</p></div></div>
+  <div class="owner-summary-grid">
+    {% for row in owner_totals %}<div class="card owner-summary-card"><span class="owner-kind owner-kind-{{ row.owner.kind }}">{{ row.owner.get_kind_display }}</span><strong>{{ row.label }}</strong><div class="owner-total {% if row.total < 0 %}danger-text{% endif %}">{{ row.total|money:household_settings.base_currency }}</div><small>{{ row.count }} tracked account{{ row.count|pluralize }}</small></div>{% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<div class="account-legend card"><div><strong>How to read this page</strong><p class="muted">Account type describes the bank product. <strong>Purpose</strong> controls where it appears. <strong>Owners</strong> can contain one person or multiple household members for a joint account.</p></div><a class="text-link" href="{% url 'account_owners' %}">Manage owners →</a></div>
+
+{% for group in account_groups %}
+<section class="account-group account-group-{{ group.key }}">
+  <div class="account-group-head"><div><span class="account-group-icon">{% if group.key == 'available' %}↔{% elif group.key == 'savings' %}S{% elif group.key == 'restricted' %}R{% elif group.key == 'investment' %}↗{% elif group.key == 'liability' %}−{% else %}E{% endif %}</span><div><h2>{{ group.label }}</h2><p class="muted">{{ group.description }}</p></div></div></div>
+  <div class="cards account-cards">
+  {% for a in group.accounts %}
+  <article class="card account-card purpose-{{ a.purpose }} {% if not a.is_active %}muted-card{% endif %} {% if not a.include_in_net_worth %}account-external{% endif %}">
+    <div class="account-card-top">
+      <div><div class="account-badges"><span class="badge owner-badge owner-{{ a.owner.kind|default:'none' }}">{% for label in a.owner_labels %}{{ label }}{% if not forloop.last %} + {% endif %}{% endfor %}</span><span class="badge account-type">{{ a.get_account_type_display }}</span></div><h3>{{ a.name }}</h3>{% if a.institution %}<small>{{ a.institution }}</small>{% endif %}</div>
+      <span class="account-nw-badge {% if a.include_in_net_worth %}included{% endif %}">{% if a.include_in_net_worth %}Net worth{% else %}Outside net worth{% endif %}</span>
+    </div>
+    <div class="account-balance"><span>Current balance</span><strong>{{ a.display_balance|money:a.currency }}</strong>{% if a.currency != household_settings.base_currency and a.include_in_net_worth %}<small>{{ a.display_base_balance|money:household_settings.base_currency }} in base currency</small>{% endif %}</div>
+    {% if a.purpose == 'restricted' and a.monthly_release_amount %}<div class="release-plan"><span class="release-icon">→</span><div><strong>{{ a.monthly_release_amount|money:a.currency }} expected monthly release</strong><small>{% if a.release_day %}Around day {{ a.release_day }}{% else %}Release day not set{% endif %}{% if a.release_destination %} · to {{ a.release_destination.name }}{% endif %}</small></div></div>{% endif %}
+    <div class="account-meta"><span>{{ a.currency }}</span><span>{{ a.get_purpose_display }}</span>{% if a.opening_date %}<span>Opened {{ a.opening_date }}</span>{% endif %}{% if not a.is_active %}<span>Archived</span>{% endif %}</div>
+    <div class="actions account-actions"><a class="btn small" href="{% url 'account_edit' a.pk %}">Edit</a>{% if a.purpose != 'external' %}<a class="btn small" href="{% url 'account_reconcile' a.pk %}">Reconcile</a>{% endif %}</div>
+  </article>
+  {% endfor %}
+  </div>
+</section>
+{% empty %}<div class="empty-state card"><strong>No accounts yet</strong><p>Create your first account to start tracking balances.</p><a class="btn primary" href="{% url 'account_add' %}">Add account</a></div>{% endfor %}
+{% endblock %}

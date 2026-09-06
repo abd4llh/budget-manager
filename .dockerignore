@@ -1,0 +1,13 @@
+.git
+.github
+.env
+android
+exports
+*.zip
+*.tgz
+*.dump
+*.sql
+*.jks
+*.keystore
+*.pem
+*.key

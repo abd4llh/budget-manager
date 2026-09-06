@@ -1,0 +1,50 @@
+name: Server CI
+
+on:
+  push:
+    paths: ['server/**', 'compose.yaml', '.github/workflows/server-ci.yml']
+  pull_request:
+    paths: ['server/**', 'compose.yaml', '.github/workflows/server-ci.yml']
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: budget_test
+          POSTGRES_USER: budget
+          POSTGRES_PASSWORD: test-password
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U budget -d budget_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DJANGO_SECRET_KEY: ci-only-secret-key-not-for-production-1234567890
+      DJANGO_DEBUG: '0'
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      POSTGRES_HOST: 127.0.0.1
+      POSTGRES_PORT: '5432'
+      POSTGRES_DB: budget_test
+      POSTGRES_USER: budget
+      POSTGRES_PASSWORD: test-password
+      BANK_SYNC_DISABLE: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: server/requirements.txt
+      - run: pip install -r server/requirements.txt
+      - working-directory: server
+        run: python manage.py migrate --noinput
+      - working-directory: server
+        run: python manage.py makemigrations --check --dry-run
+      - working-directory: server
+        run: python manage.py check --deploy
+      - working-directory: server
+        run: python manage.py test finance

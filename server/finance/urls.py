@@ -1,0 +1,33 @@
+from django.urls import path
+from . import views, mobile_api
+urlpatterns=[
+ path('',views.dashboard,name='dashboard'),path('setup/',views.setup_household,name='setup_household'),path('health/',views.health,name='health'),path('mobile/info/',views.mobile_info,name='mobile_info'),
+
+ # Native mobile API v1
+ path('api/mobile/v1/auth/login/',mobile_api.login,name='mobile_api_login'),path('api/mobile/v1/auth/logout/',mobile_api.logout,name='mobile_api_logout'),
+ path('api/mobile/v1/bootstrap/',mobile_api.bootstrap,name='mobile_api_bootstrap'),path('api/mobile/v1/dashboard/',mobile_api.dashboard,name='mobile_api_dashboard'),
+ path('api/mobile/v1/accounts/',mobile_api.accounts,name='mobile_api_accounts'),path('api/mobile/v1/budget/',mobile_api.budget,name='mobile_api_budget'),path('api/mobile/v1/budget/line/',mobile_api.budget_line,name='mobile_api_budget_line'),
+ path('api/mobile/v1/review/',mobile_api.review,name='mobile_api_review'),path('api/mobile/v1/review/<int:pk>/import/',mobile_api.review_import,name='mobile_api_review_import'),path('api/mobile/v1/review/<int:pk>/ignore/',mobile_api.review_ignore,name='mobile_api_review_ignore'),path('api/mobile/v1/review/<int:pk>/restore/',mobile_api.review_restore,name='mobile_api_review_restore'),
+ path('api/mobile/v1/transactions/',mobile_api.transactions,name='mobile_api_transactions'),path('api/mobile/v1/transactions/<int:pk>/',mobile_api.transaction_detail,name='mobile_api_transaction_detail'),
+ path('api/mobile/v1/reimbursements/<int:reimbursement_id>/candidates/',mobile_api.reimbursement_candidates,name='mobile_api_reimbursement_candidates'),path('api/mobile/v1/reimbursements/pair/',mobile_api.reimbursement_pair,name='mobile_api_reimbursement_pair'),path('api/mobile/v1/reimbursements/<int:pk>/unpair/',mobile_api.reimbursement_unpair,name='mobile_api_reimbursement_unpair'),
+ path('api/mobile/v1/reports/',mobile_api.reports,name='mobile_api_reports'),path('api/mobile/v1/banks/',mobile_api.banks,name='mobile_api_banks'),path('api/mobile/v1/banks/<int:pk>/sync/',mobile_api.bank_sync,name='mobile_api_bank_sync'),
+ path('transactions/',views.transactions,name='transactions'),path('transactions/add/',views.transaction_add,name='transaction_add'),path('transactions/<int:pk>/edit/',views.transaction_edit,name='transaction_edit'),path('transactions/<int:pk>/delete/',views.transaction_delete,name='transaction_delete'),
+ path('transactions/<int:pk>/pair-reimbursement/',views.reimbursement_pair,name='reimbursement_pair'),path('reimbursements/<int:pk>/unpair/',views.reimbursement_unpair,name='reimbursement_unpair'),
+ path('accounts/',views.accounts,name='accounts'),path('accounts/add/',views.account_form,name='account_add'),path('accounts/<int:pk>/edit/',views.account_form,name='account_edit'),path('accounts/<int:pk>/reconcile/',views.reconcile_account,name='account_reconcile'),path('accounts/owners/',views.account_owners,name='account_owners'),path('accounts/owners/add/',views.account_owner_form,name='account_owner_add'),path('accounts/owners/<int:pk>/edit/',views.account_owner_form,name='account_owner_edit'),
+ path('categories/',views.categories,name='categories'),path('tags/add/',views.tag_add,name='tag_add'),path('tags/<int:pk>/delete/',views.tag_delete,name='tag_delete'),path('categories/add/',views.category_form,name='category_add'),path('categories/<int:pk>/edit/',views.category_form,name='category_edit'),
+ path('budget/',views.budget_month,name='budget_month'),path('budget/category/add/',views.budget_category_add,name='budget_category_add'),path('budget/year/',views.budget_year,name='budget_year'),path('budget/year/copy/',views.budget_copy_year,name='budget_copy_year'),
+ path('recurring/',views.recurring_list,name='recurring'),path('recurring/add/',views.recurring_form,name='recurring_add'),path('recurring/<int:pk>/edit/',views.recurring_form,name='recurring_edit'),path('recurring/<int:pk>/run/',views.recurring_run,name='recurring_run'),
+ path('goals/',views.goals,name='goals'),path('goals/add/',views.goal_form,name='goal_add'),path('goals/<int:pk>/edit/',views.goal_form,name='goal_edit'),
+ path('loans/',views.loans,name='loans'),path('loans/add/',views.loan_form,name='loan_add'),path('loans/<int:pk>/edit/',views.loan_form,name='loan_edit'),
+ path('reports/',views.reports,name='reports'),
+ path('imports/',views.import_batches,name='imports'),path('imports/upload/',views.import_upload,name='import_upload'),path('imports/<int:pk>/map/',views.import_map,name='import_map'),path('imports/<int:pk>/review/',views.import_review,name='import_review'),path('imports/<int:pk>/commit/',views.import_commit,name='import_commit'),
+ path('imports/rules/',views.import_rules,name='import_rules'),path('imports/rules/add/',views.import_rule_form,name='import_rule_add'),path('imports/rules/<int:pk>/edit/',views.import_rule_form,name='import_rule_edit'),
+
+ path('banking/',views.bank_connections,name='bank_connections'),path('banking/connect/',views.bank_connect,name='bank_connect'),path('banking/callback/',views.bank_callback,name='bank_callback'),
+ path('banking/<int:pk>/sync/',views.bank_sync_now,name='bank_sync_now'),path('banking/<int:pk>/reauthorize/',views.bank_reauthorize,name='bank_reauthorize'),path('banking/<int:pk>/disconnect/',views.bank_disconnect,name='bank_disconnect'),
+ path('banking/accounts/<int:pk>/map/',views.bank_account_map,name='bank_account_map'),path('banking/inbox/',views.bank_inbox,name='bank_inbox'),path('banking/inbox/bulk-ignore/',views.bank_inbox_bulk_ignore,name='bank_inbox_bulk_ignore'),path('banking/inbox/<int:pk>/import/',views.bank_inbox_import,name='bank_inbox_import'),path('banking/inbox/<int:pk>/ignore/',views.bank_inbox_ignore,name='bank_inbox_ignore'),path('banking/inbox/<int:pk>/restore/',views.bank_inbox_restore,name='bank_inbox_restore'),
+ path('banking/privacy/',views.banking_privacy,name='banking_privacy'),path('banking/terms/',views.banking_terms,name='banking_terms'),path('help/',views.help_page,name='help'),
+ path('settings/',views.settings_view,name='settings'),path('members/',views.members,name='members'),path('members/add/',views.member_add,name='member_add'),path('members/<int:pk>/role/',views.member_role,name='member_role'),path('members/<int:pk>/remove/',views.member_remove,name='member_remove'),path('audit/',views.audit,name='audit'),
+ path('attachments/<int:pk>/download/',views.attachment_download,name='attachment_download'),path('attachments/<int:pk>/delete/',views.attachment_delete,name='attachment_delete'),
+ path('export/transactions.csv',views.export_transactions_csv,name='export_transactions_csv'),path('export/backup.json',views.export_json,name='export_json'),
+]

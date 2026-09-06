@@ -1,0 +1,112 @@
+services:
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-budget}
+      POSTGRES_USER: ${POSTGRES_USER:-budget}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      TZ: ${TZ:-UTC}
+    volumes:
+      # PostgreSQL 18 stores versioned data below /var/lib/postgresql.
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-budget} -d ${POSTGRES_DB:-budget}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: ./server
+      args:
+        APP_VERSION: ${SERVER_IMAGE_TAG:-local}
+    image: budget-manager-server:${SERVER_IMAGE_TAG:-local}
+    restart: unless-stopped
+    init: true
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - media_data:/app/media
+    ports:
+      - "${BUDGET_PORT:-8015}:8015"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8015/health/', timeout=4).read()"]
+      interval: 30s
+      timeout: 8s
+      retries: 5
+      start_period: 30s
+
+  scheduler:
+    build:
+      context: ./server
+      args:
+        APP_VERSION: ${SERVER_IMAGE_TAG:-local}
+    image: budget-manager-server:${SERVER_IMAGE_TAG:-local}
+    restart: unless-stopped
+    init: true
+    env_file: .env
+    depends_on:
+      web:
+        condition: service_healthy
+    volumes:
+      - media_data:/app/media
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    command: ["sh","-c","while true; do python manage.py process_recurring; sleep 3600; done"]
+
+  backup:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGPORT: 5432
+      PGDATABASE: ${POSTGRES_DB:-budget}
+      PGUSER: ${POSTGRES_USER:-budget}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - backup_data:/backups
+      - media_data:/media:ro
+    command:
+      - sh
+      - -c
+      - |
+        while true; do
+          stamp=$$(date +%Y-%m-%d_%H%M%S)
+          pg_dump -Fc -f /backups/budget-$${stamp}.dump
+          tar -czf /backups/media-$${stamp}.tgz -C /media . 2>/dev/null || true
+          find /backups -type f -mtime +${BACKUP_RETENTION_DAYS:-30} -delete
+          sleep 86400
+        done
+
+  # Optional. Enable with: docker compose --profile discovery up -d
+  # Host networking is primarily intended for Linux Docker hosts.
+  discovery:
+    profiles: ["discovery"]
+    image: budget-manager-server:${SERVER_IMAGE_TAG:-local}
+    restart: unless-stopped
+    env_file: .env
+    network_mode: host
+    entrypoint: ["python", "/app/scripts/mobile_discovery.py"]
+    environment:
+      BUDGET_MANAGER_DISCOVERY_PORT: ${BUDGET_MANAGER_DISCOVERY_PORT:-7358}
+      BUDGET_MANAGER_WEB_PORT: ${BUDGET_PORT:-8015}
+      BUDGET_MANAGER_DISCOVERY_NAME: ${BUDGET_MANAGER_DISCOVERY_NAME:-Budget Manager}
+      BUDGET_MANAGER_DISCOVERY_URL: ${BUDGET_MANAGER_DISCOVERY_URL:-}
+
+volumes:
+  postgres_data:
+  media_data:
+  backup_data:

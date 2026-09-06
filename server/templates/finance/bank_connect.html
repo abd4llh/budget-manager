@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+{% block title %}Connect bank · Budget Manager{% endblock %}
+{% block content %}
+<div class="page-head"><div><p class="eyebrow">Open Banking</p><h1>Connect a bank</h1><p class="muted">The list below is loaded live from Enable Banking. We request balances and booked transactions only—no payment-initiation permission.</p></div><a class="btn" href="{% url 'bank_connections' %}">Back</a></div>
+<section class="card form-card bank-connect-card"><form method="post">{% csrf_token %}<label for="bank_name">Bank</label><select class="control" id="bank_name" name="bank_name" required><option value="">Choose a bank…</option>{% for bank in banks %}<option value="{{ bank.name }}" data-country="{{ bank.country|default:'DE' }}">{{ bank.name }}{% if bank.group.name and bank.group.name != bank.name %} · {{ bank.group.name }}{% endif %}</option>{% endfor %}</select><input type="hidden" name="country" id="bank_country" value="DE"><div class="inline-alert"><strong>What happens next?</strong><span>You will leave Budget Manager temporarily, authenticate with your bank, approve read-only account information access, and then return here.</span></div><button class="btn primary" type="submit">Continue to bank authorization</button></form></section>
+<script>const s=document.getElementById('bank_name'),c=document.getElementById('bank_country');if(s&&c){s.addEventListener('change',()=>{const o=s.options[s.selectedIndex];c.value=o?.dataset?.country||'DE';});}</script>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends 'base.html' %}{% load finance_tags %}
+{% block title %}Bank connections · Budget Manager{% endblock %}
+{% block content %}
+<div class="page-head"><div><p class="eyebrow">Automatic imports</p><h1>Bank connections</h1><p class="muted">Read-only Open Banking feeds. Automatic refreshes are spaced at least six hours apart; Sync now is an interactive refresh using your browser context. Bank credentials stay with the bank/provider.</p></div><div class="actions"><a class="btn" href="{% url 'bank_inbox' %}">Review inbox{% if pending_count %} · {{ pending_count }}{% endif %}</a>{% if bank_config.configured %}<a class="btn primary" href="{% url 'bank_connect' %}">＋ Connect bank</a>{% endif %}</div></div>
+
+{% if not bank_config.configured %}
+<section class="card bank-setup-card"><div><span class="badge warning">Setup required</span><h2>Enable Banking credentials are not configured</h2><p>Register a personal/restricted Enable Banking application, whitelist every account you intend to read in the Enable Banking Control Panel, then add its application ID and private key to the server <code>.env</code>. This integration is account-information only; it never initiates payments.</p></div><div class="bank-setup-meta"><strong>Callback URL</strong><code>{{ bank_display_base }}{% url 'bank_callback' %}</code><strong>Privacy URL</strong><code>{{ bank_display_base }}{% url 'banking_privacy' %}</code><strong>Terms URL</strong><code>{{ bank_display_base }}{% url 'banking_terms' %}</code></div></section>
+{% endif %}
+
+{% if connections %}
+<div class="bank-connection-list">
+{% for c in connections %}
+<section class="card bank-connection-card">
+  <div class="bank-connection-head"><div><div class="account-badges"><span class="badge">{{ c.get_provider_display }}</span><span class="badge bank-status bank-status-{{ c.status }}">{{ c.get_status_display }}</span></div><h2>{{ c.aspsp_name }}</h2><p class="muted">{{ c.country }} · {% if c.valid_until %}Consent until {{ c.valid_until|date:'j M Y' }}{% else %}Consent expiry unavailable{% endif %}</p></div><div class="actions"><form method="post" action="{% url 'bank_sync_now' c.pk %}">{% csrf_token %}<button class="btn" type="submit" title="Interactive refresh using your current browser session">Sync now</button></form><form method="post" action="{% url 'bank_reauthorize' c.pk %}">{% csrf_token %}<button class="btn" type="submit">Re-authorize</button></form><form method="post" action="{% url 'bank_disconnect' c.pk %}">{% csrf_token %}<button class="btn danger-ghost" type="submit">Disconnect</button></form></div></div>
+  {% if c.sync_issue %}
+  <div class="inline-alert {% if c.sync_issue.kind == 'rate_limit' %}warning{% else %}danger{% endif %}">
+    <div>
+      <strong>{{ c.sync_issue.title }}</strong>
+      <span>{{ c.sync_issue.message }}</span>
+      {% if c.sync_issue.next_at %}<small class="muted">Next unattended attempt: {{ c.sync_issue.next_at|date:'j M Y H:i' }}</small>{% endif %}
+      <details class="sync-technical"><summary>Technical details</summary><code>{{ c.sync_issue.technical }}</code></details>
+    </div>
+  </div>
+  {% endif %}
+  <div class="bank-meta-row"><span>Last synced <strong>{% if c.last_synced_at %}{{ c.last_synced_at|date:'j M Y H:i' }}{% else %}Never{% endif %}</strong></span><span>{{ c.linked_accounts.count }} bank account{{ c.linked_accounts.count|pluralize }}</span>{% if c.next_background_sync_at %}<span>Next automatic refresh <strong>{{ c.next_background_sync_at|date:'j M Y H:i' }}</strong></span>{% endif %}</div>
+  <div class="bank-linked-grid">
+  {% for link in c.linked_accounts.all %}
+    <article class="bank-linked-account {% if not link.account %}needs-map{% endif %}">
+      <div><strong>{{ link.name|default:'Bank account' }}</strong><small>{{ link.masked_iban }}{% if link.currency %} · {{ link.currency }}{% endif %}</small></div>
+      <div class="bank-balance"><span>Bank balance</span><strong>{% if link.last_balance != None %}{{ link.last_balance|money:link.currency }}{% else %}—{% endif %}</strong></div>
+      <div class="bank-map-state">{% if link.account %}<span class="badge success">Mapped</span><span>→ {{ link.account.name }}{% if link.account.owner %} · {{ link.account.owner.name }}{% endif %}</span><span class="muted">Book balance {{ link.account.display_balance|money:link.account.currency }}</span>{% else %}<span class="badge warning">Needs mapping</span><span>Choose which Budget Manager account this feed belongs to.</span>{% endif %}</div>
+      <a class="btn small" href="{% url 'bank_account_map' link.pk %}">{% if link.account %}Change mapping{% else %}Map account{% endif %}</a>
+    </article>
+  {% empty %}<p class="muted">No accounts were returned for this consent.</p>{% endfor %}
+  </div>
+</section>
+{% endfor %}
+</div>
+{% else %}
+<div class="empty-state card"><strong>No bank connections yet</strong><p>Connect supported accounts after the Enable Banking application is configured. Availability depends on your country, bank and Enable Banking application permissions. New transactions go to a review inbox before they affect your ledger.</p>{% if bank_config.configured %}<a class="btn primary" href="{% url 'bank_connect' %}">Connect a bank</a>{% endif %}</div>
+{% endif %}
+{% endblock %}

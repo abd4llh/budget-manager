@@ -1,0 +1,82 @@
+{% extends 'base.html' %}{% load finance_tags %}
+{% block title %}Bank inbox · Budget Manager{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div><p class="eyebrow">Review before ledger</p><h1>Bank inbox</h1><p class="muted">Synced rows stay outside the ledger until you import them. Search, narrow the list, pair transfers, or ignore selected observations.</p></div>
+  <div class="page-actions"><a class="btn" href="{% url 'help' %}#bank-inbox">How review works</a><a class="btn" href="{% url 'bank_connections' %}">Bank connections</a></div>
+</div>
+
+<form class="card bank-filter-panel" method="get">
+  <div class="filter-primary">
+    <label class="filter-field filter-search"><span>Search words</span><input class="control" type="search" name="q" value="{{ q }}" placeholder="REWE, employer, reference, account…"></label>
+    <label class="filter-field"><span>Status</span><select class="control" name="status"><option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Needs review</option><option value="imported" {% if status_filter == 'imported' %}selected{% endif %}>Imported</option><option value="ignored" {% if status_filter == 'ignored' %}selected{% endif %}>Ignored</option><option value="all" {% if status_filter == 'all' %}selected{% endif %}>All statuses</option></select></label>
+    <label class="filter-field"><span>Direction</span><select class="control" name="direction"><option value="">Money in & out</option><option value="out" {% if filters.direction == 'out' %}selected{% endif %}>Money out</option><option value="in" {% if filters.direction == 'in' %}selected{% endif %}>Money in</option></select></label>
+    <label class="filter-field"><span>Sort</span><select class="control" name="sort"><option value="newest" {% if sort_filter == 'newest' %}selected{% endif %}>Newest first</option><option value="oldest" {% if sort_filter == 'oldest' %}selected{% endif %}>Oldest first</option><option value="amount_high" {% if sort_filter == 'amount_high' %}selected{% endif %}>Largest amount</option><option value="amount_low" {% if sort_filter == 'amount_low' %}selected{% endif %}>Smallest amount</option></select></label>
+  </div>
+  <details class="advanced-filters" {% if filters.exact_date or filters.date_from or filters.date_to or filters.amount_exact or filters.amount_min or filters.amount_max or filters.bank or filters.account %}open{% endif %}>
+    <summary>More filters</summary>
+    <div class="filter-grid">
+      <label class="filter-field"><span>Exact date</span><input class="control" type="date" name="exact_date" value="{{ filters.exact_date }}"></label>
+      <label class="filter-field"><span>Date from</span><input class="control" type="date" name="date_from" value="{{ filters.date_from }}"></label>
+      <label class="filter-field"><span>Date to</span><input class="control" type="date" name="date_to" value="{{ filters.date_to }}"></label>
+      <label class="filter-field"><span>Exact amount</span><input class="control" type="number" step="0.01" min="0" name="amount_exact" value="{{ filters.amount_exact }}" placeholder="10.00"></label>
+      <label class="filter-field"><span>Minimum amount</span><input class="control" type="number" step="0.01" min="0" name="amount_min" value="{{ filters.amount_min }}"></label>
+      <label class="filter-field"><span>Maximum amount</span><input class="control" type="number" step="0.01" min="0" name="amount_max" value="{{ filters.amount_max }}"></label>
+      <label class="filter-field"><span>Bank</span><select class="control" name="bank"><option value="">All banks</option>{% for connection in bank_connections %}<option value="{{ connection.pk }}" {% if filters.bank == connection.pk|stringformat:'s' %}selected{% endif %}>{{ connection.aspsp_name }}</option>{% endfor %}</select></label>
+      <label class="filter-field"><span>Bank feed</span><select class="control" name="account"><option value="">All feeds</option>{% for link in linked_accounts %}<option value="{{ link.pk }}" {% if filters.account == link.pk|stringformat:'s' %}selected{% endif %}>{{ link.connection.aspsp_name }} · {% if link.account %}{{ link.account.name }}{% else %}{{ link.name }}{% endif %}</option>{% endfor %}</select></label>
+      <label class="filter-field"><span>Rows per page</span><select class="control" name="page_size"><option value="50" {% if page_size == 50 %}selected{% endif %}>50</option><option value="100" {% if page_size == 100 %}selected{% endif %}>100</option><option value="250" {% if page_size == 250 %}selected{% endif %}>250</option></select></label>
+    </div>
+  </details>
+  {% if filter_errors %}<div class="inline-alert warning">{% for error in filter_errors %}<span>{{ error }}</span>{% endfor %}</div>{% endif %}
+  <div class="filter-actions"><button class="btn primary" type="submit">Apply filters</button><a class="btn" href="{% url 'bank_inbox' %}">Reset</a><span class="muted filter-result-count">{{ page_obj.paginator.count }} matching transaction{{ page_obj.paginator.count|pluralize }}</span></div>
+</form>
+
+{% if status_filter == 'pending' and rows %}
+<form id="bulk-ignore-form" method="post" action="{% url 'bank_inbox_bulk_ignore' %}" class="bulk-action-bar card">{% csrf_token %}<input type="hidden" name="next" value="{{ current_path }}">
+  <label class="bulk-select-all"><input type="checkbox" data-bank-select-all> <span>Select this page</span></label>
+  <span class="muted" data-selected-count>0 selected</span>
+  <button class="btn danger" type="submit" data-bulk-ignore disabled>Ignore selected</button>
+</form>
+{% endif %}
+
+<div class="bank-inbox-list">
+{% for row in rows %}<article class="card bank-inbox-row">
+  <div class="bank-row-main">
+    {% if row.status == 'pending' and status_filter == 'pending' %}<label class="bank-row-select" title="Select transaction"><input form="bulk-ignore-form" type="checkbox" name="selected" value="{{ row.pk }}" data-bank-row-select><span class="sr-only">Select {{ row.description }}</span></label>{% endif %}
+    <div class="bank-row-description"><div class="account-badges"><span class="badge">{{ row.bank_account.connection.aspsp_name }}</span><span class="badge">{% if row.bank_account.account %}{{ row.bank_account.account.name }}{% else %}Unmapped account{% endif %}</span>{% if row.suggested_category %}<span class="badge subtle" title="{{ row.suggestion_reason }}">Suggested: {{ row.suggested_category.name }}{% if row.suggestion_source == 'user_rule' %} · Your rule{% elif row.suggestion_source == 'learned_account' or row.suggestion_source == 'learned_counterparty' or row.suggestion_source == 'learned_merchant' %} · Learned{% elif row.suggestion_source == 'builtin_rule' %} · Rule{% elif row.suggestion_source == 'fallback' %} · Fallback{% endif %}</span>{% elif row.status == 'pending' %}<span class="badge subtle" title="{{ row.suggestion_reason }}">No confident suggestion</span>{% endif %}</div><h3>{{ row.description }}</h3><p class="muted">{{ row.booking_date }}{% if row.counterparty %} · {{ row.counterparty }}{% endif %}{% if row.entry_reference %} · Ref {{ row.entry_reference|truncatechars:32 }}{% endif %}</p></div>
+    <strong class="bank-row-amount {% if row.amount < 0 %}negative{% else %}positive{% endif %}">{{ row.amount|money:row.currency }}</strong>
+  </div>
+{% if row.status == 'pending' %}
+  {% if not row.bank_account.account %}<div class="inline-alert warning"><strong>Map this bank account first.</strong><a href="{% url 'bank_account_map' row.bank_account.pk %}">Map account →</a></div>{% else %}
+  <form method="post" action="{% url 'bank_inbox_import' row.pk %}" class="bank-import-form">{% csrf_token %}<input type="hidden" name="next" value="{{ current_path }}"><label class="filter-field"><span>Category</span>{{ row.import_form.category }}</label><button class="btn primary" type="submit">Import</button>{% if row.amount > 0 %}<button class="btn" type="submit" name="pair_reimbursement" value="1" title="Import this incoming payment, then choose the shared purchase it reimburses">Import + pair reimbursement</button>{% endif %}{% if row.candidates %}<div class="transfer-candidates"><span>Possible internal transfer:</span>{% for candidate in row.candidates %}<button class="btn small" type="submit" name="match_id" value="{{ candidate.pk }}">Pair with {{ candidate.bank_account.account.name }} · {{ candidate.booking_date }} · {{ candidate.amount|money:candidate.currency }}</button>{% endfor %}</div>{% endif %}</form>
+  <form method="post" action="{% url 'bank_inbox_ignore' row.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ current_path }}"><button class="link-button muted" type="submit">Ignore this bank row</button></form>{% endif %}
+{% elif row.status == 'imported' %}<div class="inline-alert success"><strong>Imported</strong>{% if row.transaction %}<a href="{% url 'transaction_edit' row.transaction.pk %}">Open transaction →</a>{% endif %}</div>{% else %}<div class="inline-alert"><strong>Ignored</strong><span>This bank observation does not affect the ledger.</span><form method="post" action="{% url 'bank_inbox_restore' row.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ current_path }}"><button class="btn small" type="submit">Restore to inbox</button></form></div>{% endif %}
+</article>{% empty %}<div class="empty-state card"><strong>No matching bank transactions</strong><p>Try widening the filters or switch the status view.</p></div>{% endfor %}
+</div>
+
+{% if page_obj.paginator.num_pages > 1 %}<nav class="pagination" aria-label="Bank inbox pages"><span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span><div>{% if page_obj.has_previous %}<a class="btn small" href="?{% if query_without_page %}{{ query_without_page }}&{% endif %}page={{ page_obj.previous_page_number }}">← Previous</a>{% endif %}{% if page_obj.has_next %}<a class="btn small" href="?{% if query_without_page %}{{ query_without_page }}&{% endif %}page={{ page_obj.next_page_number }}">Next →</a>{% endif %}</div></nav>{% endif %}
+
+<script>
+(() => {
+  const all = document.querySelector('[data-bank-select-all]');
+  const boxes = Array.from(document.querySelectorAll('[data-bank-row-select]'));
+  const count = document.querySelector('[data-selected-count]');
+  const action = document.querySelector('[data-bulk-ignore]');
+  if (!all || !boxes.length || !count || !action) return;
+  const refresh = () => {
+    const n = boxes.filter(x => x.checked).length;
+    count.textContent = `${n} selected`;
+    action.disabled = n === 0;
+    all.checked = n === boxes.length;
+    all.indeterminate = n > 0 && n < boxes.length;
+  };
+  all.addEventListener('change', () => { boxes.forEach(x => { x.checked = all.checked; }); refresh(); });
+  boxes.forEach(x => x.addEventListener('change', refresh));
+  document.getElementById('bulk-ignore-form')?.addEventListener('submit', (event) => {
+    const n = boxes.filter(x => x.checked).length;
+    if (!n || !window.confirm(`Ignore ${n} selected bank transaction${n === 1 ? '' : 's'}? You can restore ignored rows later.`)) event.preventDefault();
+  });
+  refresh();
+})();
+</script>
+{% endblock %}
