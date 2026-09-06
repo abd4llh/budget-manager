@@ -12,7 +12,23 @@ if (-not (Test-Path $env:BUDGET_ANDROID_KEYSTORE)) { throw "Keystore not found: 
 function Get-JavaMajor([string]$javaHome) {
     $java = Join-Path $javaHome 'bin\java.exe'
     if (-not (Test-Path $java)) { return $null }
-    $out = (& $java -version 2>&1 | Out-String)
+
+    $psi = New-Object System.Diagnostics.ProcessStartInfo
+    $psi.FileName = $java
+    $psi.Arguments = '-version'
+    $psi.UseShellExecute = $false
+    $psi.RedirectStandardOutput = $true
+    $psi.RedirectStandardError = $true
+    $psi.CreateNoWindow = $true
+
+    $process = New-Object System.Diagnostics.Process
+    $process.StartInfo = $psi
+    [void]$process.Start()
+
+    $out = $process.StandardOutput.ReadToEnd()
+    $out += $process.StandardError.ReadToEnd()
+    $process.WaitForExit()
+
     if ($out -match 'version\s+"(\d+)') { return [int]$Matches[1] }
     return $null
 }
